@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">VeriFacil</string>
-    <string name="verifacil">Verifácil</string>
+    <string name="verifacil">VeriFacil</string>
+    <string name="conectarseButtonText">Conectarse con OBD II</string>
+    <string name="connecting">Conectando ...</string>
+    <string name="readCodesButtonText">Leer códigos de error almacenados</string>
+    <string name="readyText">Estamos listos para poder iniciar la lectura de códigos de falla.</string>
+    <string name="welcomeText">Bienvenido a VeriFacil, con esta aplicación podrás realizar una preverificación de tu automóvil</string>
 </resources>
