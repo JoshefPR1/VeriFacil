@@ -1,32 +1,36 @@
 package com.TT.verifacil;
 
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+
+import androidx.annotation.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.UUID;
 
-public class BluetoothService  {
+public class BluetoothService extends Service {
     // Nombre para el Service Device Protocol (SDP)
     private static final String NAME = "Verifacil";
-    public InputStream mmInStream;
-    public OutputStream mmOutStream;
-    public BluetoothSocket mSocket;
+    private InputStream mmInStream;
+    private OutputStream mmOutStream;
+    private BluetoothSocket mmSocket;
 
     // UUID para la aplicación
 //    private static final UUID VF_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private static final UUID VF_UUID = UUID.fromString("b545a148-8f76-11eb-8dcd-0242ac130003");
 
-    private final BluetoothAdapter mAdapter;
+    private BluetoothAdapter mAdapter;
     private Handler mHandler;
     private ConnectThread mConnectThread;
     private ConnectedThread mConnectedThread;
@@ -135,8 +139,8 @@ public class BluetoothService  {
 //        mConnectedThread = new ConnectedThread(socket);
 //        mConnectedThread.start();
 
-        pruebaConnect(socket);
-        mSocket = socket;
+        connectedFunction(socket);
+        mmSocket = socket;
 
         // Enviamos el nombre del dispositivo al que nos conectamos para mostarlo en el UI
         Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_DEVICE_NAME);
@@ -221,6 +225,10 @@ public class BluetoothService  {
         return mmOutStream;
     }
 
+    public BluetoothSocket getMmSocket() {
+        return mmSocket;
+    }
+
     /**
      * This thread runs while attempting to make an outgoing connection
      * with a device. It runs straight through; the connection either
@@ -280,7 +288,7 @@ public class BluetoothService  {
      * This thread runs during a connection with a remote device.
      * It handles all incoming and outgoing transmissions.
      */
-    private void pruebaConnect(BluetoothSocket socket){
+    private void connectedFunction(BluetoothSocket socket){
         InputStream tmpIn = null;
         OutputStream tmpOut = null;
         // Get the BluetoothSocket input and output streams
@@ -368,5 +376,29 @@ public class BluetoothService  {
             } catch (IOException e) {
             }
         }
+    }
+
+    public class LocalBinder extends Binder {
+        BluetoothService getService() {
+            // Return this instance of LocalService so clients can call public methods
+            return BluetoothService.this;
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String deviceg = intent.getStringExtra("BTDevice");
+        mAdapter = BluetoothAdapter.getDefaultAdapter();
+        mState = STATE_NONE;
+        mmInStream = null;
+        mmOutStream = null;
+        return START_STICKY;
+    }
+    private final IBinder mBinder = new LocalBinder();
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return mBinder;
     }
 }

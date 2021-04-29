@@ -187,8 +187,6 @@ public class MainActivity extends AppCompatActivity{
         InputStream in = mBTService.getMmInStream();
         OutputStream out = mBTService.getMmOutStream();
 
-        BluetoothSocket socket = mBTService.mSocket;
-
         ATZ reset = new ATZ();
         ATE_ echoOff = new ATE_(false);
         ATSP_ selectProtocol = new ATSP_(Protocol.AUTO.getId());

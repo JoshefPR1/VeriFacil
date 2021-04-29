@@ -41,7 +41,7 @@ public abstract class Command {
         this.resultText = res.toString()
                 .replaceAll("SEARCHING","")
                 .replaceAll("\\s","")
-                .replaceAll("(BUS INIT)|(BUSINIT)|(\\.)", "");
+                .replaceAll("(BUS INIT(:?))|(BUSINIT(:?))|(\\.\\.\\.)", "");
     }
 
     protected abstract void interpretResult() throws ExecutionException, DecoderException;
