@@ -6,10 +6,13 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.widget.Toast;
 
@@ -48,13 +51,14 @@ public class ReadCodesVehicle extends AppCompatActivity {
     public static final String TOAST = "toast";
 
     private String mConnectedDeviceName = null;
+    private boolean mBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_read_codes_vehicle);
 
-        Intent intent = this.getIntent();
+        /*Intent intent = this.getIntent();
 
         mBTDeviceAddress = intent.getStringExtra("BTDeviceAddress");
 
@@ -62,25 +66,24 @@ public class ReadCodesVehicle extends AppCompatActivity {
 
         BluetoothDevice device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mBTDeviceAddress);
 
-        mBTService.connect(device);
+        mBTService.connect(device);*/
+        Intent intent = new Intent(this, BluetoothService.class);
+        bindService(intent, connection, Context.BIND_AUTO_CREATE);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        if (BluetoothService.STATE_CONNECTED != mBTService.getState()){
-            finish();
-        }
-
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+    }
+
+    private void readCodes(){
         InputStream in = mBTService.getMmInStream();
         OutputStream out = mBTService.getMmOutStream();
-
-        BluetoothSocket socket = mBTService.mSocket;
 
         ATZ reset = new ATZ();
         ATE_ echoOff = new ATE_(false);
@@ -126,6 +129,8 @@ public class ReadCodesVehicle extends AppCompatActivity {
             } catch (DecoderException e) {
                 e.printStackTrace();
             }
+
+
         else
             finish();
     }
@@ -185,7 +190,25 @@ public class ReadCodesVehicle extends AppCompatActivity {
                         break;*/
                 }
             }
+        }
+    };
 
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            mBTService = binder.getService();
+            mBTService.setActivityHandler(mHandler);
+            mBound = true;
+            readCodes();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
         }
     };
 }

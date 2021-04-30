@@ -10,13 +10,16 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.os.Parcelable;
 import android.view.View;
@@ -59,6 +62,7 @@ public class MainActivity extends AppCompatActivity{
     BluetoothAdapter mBluetoothAdapter;
     private boolean DeviceSelected;
     private BluetoothService mBTService;
+    private boolean mBound;
 
     // Key names received from the BluetoothChatService Handler
     public static final String DEVICE_NAME = "device_name";
@@ -88,10 +92,6 @@ public class MainActivity extends AppCompatActivity{
             return;
         }
         DeviceSelected = false;
-
-        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        filter.addAction(BluetoothService.CONNECTION_STATUS);
-        registerReceiver(mReceiver, filter);
 
         mFindDevice = (Button) findViewById(R.id.connectButton);
         mLoadingDisplay = (TextView)findViewById(R.id.loadingDisplay);
@@ -131,8 +131,10 @@ public class MainActivity extends AppCompatActivity{
                             Manifest.permission.ACCESS_COARSE_LOCATION
                     },200);
         }
-        if(mBTService == null)
-            setupBTService();
+
+        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        filter.addAction(BluetoothService.CONNECTION_STATUS);
+        registerReceiver(mReceiver, filter);
     }
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -147,6 +149,7 @@ public class MainActivity extends AppCompatActivity{
                     checkBluetoothEnabled();
                 } else {
                     // Si no se otorga el permiso, mostramos un mensaje y cerramos la aplicación
+                    //TODO(2): Mejorar el mesaje para volver a solicitar la activación del bluetooth
                     Toast.makeText(this,"Permiso no se otorgó, adiós",Toast.LENGTH_LONG).show();
                     finish();
                 }
@@ -179,60 +182,8 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void readCodes(){
-
-//        mBTService.stop();
-//        Intent intent = new Intent(this, ReadCodesVehicle.class);
-//        intent.putExtra("BTDeviceAddress",addressDeviceSelected);
-//        startActivity(intent);
-        InputStream in = mBTService.getMmInStream();
-        OutputStream out = mBTService.getMmOutStream();
-
-        ATZ reset = new ATZ();
-        ATE_ echoOff = new ATE_(false);
-        ATSP_ selectProtocol = new ATSP_(Protocol.AUTO.getId());
-        ATDPN selectedProtocol = new ATDPN();
-        ATAL longMessage = new ATAL();
-        CountDTC countDTC = new CountDTC();
-        ReadDTC readDTC = new ReadDTC();
-
-        List<TroubleCode> troubleCodes;
-
-        if (mBTService.getState() == BluetoothService.STATE_CONNECTED)
-            // Starts procedure for request DTC
-            try {
-                // Reset ELM
-                reset.run(out,in);
-                if (!reset.isOK())
-                    return;
-                echoOff.run(out,in);
-                if (!echoOff.isOK())
-                    return;
-                selectProtocol.run(out,in);
-                if(!selectProtocol.isOK())
-                    return;
-                selectedProtocol.run(out,in);
-                List<String> isoIds = Arrays.asList("6","7","8","9");
-                if(isoIds.contains(selectedProtocol.getProtocol().getId())) {
-                    longMessage.run(out,in);
-                    if(!longMessage.isOK())
-                        return;
-                    readDTC.setISO(true);
-                }
-                readDTC.run(out,in);
-                troubleCodes = readDTC.getTroubleCodes();
-                System.out.println(troubleCodes);
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            } catch (DecoderException e) {
-                e.printStackTrace();
-            }
-
-
+        Intent intent = new Intent(this, ReadCodesVehicle.class);
+        startActivity(intent);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -245,11 +196,16 @@ public class MainActivity extends AppCompatActivity{
                     String address = data.getExtras().getString(FindDevice.EXTRA_DEVICE_ADDRESS);
                     addressDeviceSelected = address;
                     DeviceSelected = true;
-                    // Obtenemos el objeto BLuetoothDevice
-                    BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
-                    // Intentamos conectarnos con el dispositivo
-                    mBTService.connect(device);
+
+                    Intent intent = new Intent(this,BluetoothService.class);
+                    intent.putExtra("BTAddress", addressDeviceSelected);
+                    startService(intent);
+                    bindService(intent,connection,Context.BIND_AUTO_CREATE);
                     setViewConnectingState();
+                }
+                // Cuando DeviceListActivity retorna un error
+                else{
+                    Toast.makeText(this, "Hubo un error al seleccionar un dispositivo", Toast.LENGTH_SHORT).show();
                 }
                 break;
             case REQUEST_ENABLE_BT:
@@ -297,26 +253,12 @@ public class MainActivity extends AppCompatActivity{
         mFindDevice.setVisibility(View.VISIBLE);
         DeviceSelected = false;
     }
-
+    //TODO(1): Quitar Handler
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case MESSAGE_WRITE:
-                    byte[] writeBuf = (byte[]) msg.obj;
-                    // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    //mAdapter.notifyDataSetChanged();
-                    //messageList.add(new androidRecyclerView.Message(counter++, writeMessage, "Me"));
-                    break;
-                case MESSAGE_READ:
-                   /* byte[] readBuf = (byte[]) msg.obj;
-                    // construct a string from the valid bytes in the buffer
-                    String readMessage = new String(readBuf, 0, msg.arg1);*/
-                    //mAdapter.notifyDataSetChanged();
-                    //messageList.add(new androidRecyclerView.Message(counter++, readMessage, mConnectedDeviceName));
-//                    mMessageReceived.add(msg.obj.toString());
-                    break;
+
                 case MESSAGE_DEVICE_NAME:
                     // save the connected device's name
                     mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
@@ -347,6 +289,7 @@ public class MainActivity extends AppCompatActivity{
                         }
                         break;*/
                         Toast.makeText(context,"Se ha apagado el adaptador de Bluetooth",Toast.LENGTH_LONG).show();
+                        //TODO(0): Solicitar activar Bluetooth
                     case BluetoothAdapter.STATE_ON:
                         /*populateDeviceSpinner();
                         break;*/
@@ -373,11 +316,23 @@ public class MainActivity extends AppCompatActivity{
         }
     };
 
-    private void setupBTService() {
+    private ServiceConnection connection = new ServiceConnection() {
 
-        // Initialize the BluetoothChatService to perform bluetooth connections
-        mBTService = new BluetoothService(this, mHandler);
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
+            mBTService = binder.getService();
+            //TODO(3): Quitar cuando se quite el handler
+            mBTService.setActivityHandler(mHandler);
+            mBound = true;
+        }
 
-    }
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBound = false;
+        }
+    };
 
 }

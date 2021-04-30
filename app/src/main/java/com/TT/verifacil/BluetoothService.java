@@ -59,15 +59,19 @@ public class BluetoothService extends Service {
         mmOutStream = null;
     }
 
-    public void setActivityHandler(Context context, Handler handler){
+    public BluetoothService(){
+        super();
+    }
+
+    public void setActivityHandler( Handler handler){
         mHandler = handler;
-        this.context = context;
+        setState(this.mState);
     }
 
     /**
      * Cambia el estado actual de la conexión
      *
-     * @param state Un Entero que define el estao actual de la conexión
+     * @param state Un Entero que define el estado actual de la conexión
      * */
     private synchronized void setState(int state){
         mState = state;
@@ -77,6 +81,7 @@ public class BluetoothService extends Service {
         Intent intent = new Intent();
         intent.setAction(CONNECTION_STATUS);
         intent.putExtra("CONN_STATUS", mState);
+        context = getApplicationContext();
         context.sendBroadcast(intent);
     }
 
@@ -142,12 +147,14 @@ public class BluetoothService extends Service {
         connectedFunction(socket);
         mmSocket = socket;
 
-        // Enviamos el nombre del dispositivo al que nos conectamos para mostarlo en el UI
-        Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_DEVICE_NAME);
-        Bundle bundle = new Bundle();
-        bundle.putString(MainActivity.DEVICE_NAME, device.getName());
-        msg.setData(bundle);
-        mHandler.sendMessage(msg);
+        if(mHandler!=null){
+            // Enviamos el nombre del dispositivo al que nos conectamos para mostarlo en el UI
+            Message msg = mHandler.obtainMessage(MainActivity.MESSAGE_DEVICE_NAME);
+            Bundle bundle = new Bundle();
+            bundle.putString(MainActivity.DEVICE_NAME, device.getName());
+            msg.setData(bundle);
+            mHandler.sendMessage(msg);
+        }
         setState(STATE_CONNECTED);
     }
 
@@ -387,11 +394,13 @@ public class BluetoothService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        String deviceg = intent.getStringExtra("BTDevice");
+        String deviceg = intent.getStringExtra("BTAddress");
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
         mmInStream = null;
         mmOutStream = null;
+        BluetoothDevice device = mAdapter.getRemoteDevice(deviceg);
+        connect(device);
         return START_STICKY;
     }
     private final IBinder mBinder = new LocalBinder();
