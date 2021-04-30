@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.os.Parcelable;
 import android.widget.Toast;
 
 import org.apache.commons.codec.DecoderException;
@@ -21,6 +22,7 @@ import org.apache.commons.codec.DecoderException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -93,30 +95,34 @@ public class ReadCodesVehicle extends AppCompatActivity {
         CountDTC countDTC = new CountDTC();
         ReadDTC readDTC = new ReadDTC();
 
-        List<TroubleCode> troubleCodes;
+        List<TroubleCode> troubleCodes = null;
+        String versionELM = "";
+        String selectedProtocolInfo = "";
 
-        if (mBTService.getState() == BluetoothService.STATE_CONNECTED)
+        if (mBTService.getState() == BluetoothService.STATE_CONNECTED) {
             // Starts procedure for request DTC
             try {
                 // Reset ELM
-                reset.run(out,in);
+                reset.run(out, in);
                 if (!reset.isOK())
                     return;
-                echoOff.run(out,in);
+                versionELM = reset.getELMVersion();
+                echoOff.run(out, in);
                 if (!echoOff.isOK())
                     return;
-                selectProtocol.run(out,in);
-                if(!selectProtocol.isOK())
+                selectProtocol.run(out, in);
+                if (!selectProtocol.isOK())
                     return;
-                selectedProtocol.run(out,in);
-                List<String> isoIds = Arrays.asList("6","7","8","9");
-                if(isoIds.contains(selectedProtocol.getProtocol().getId())) {
-                    longMessage.run(out,in);
-                    if(!longMessage.isOK())
+                selectedProtocol.run(out, in);
+                List<String> isoIds = Arrays.asList("6", "7", "8", "9");
+                if (isoIds.contains(selectedProtocol.getProtocol().getId())) {
+                    longMessage.run(out, in);
+                    if (!longMessage.isOK())
                         return;
                     readDTC.setISO(true);
                 }
-                readDTC.run(out,in);
+                selectedProtocolInfo = selectedProtocol.getProtocol().getDescription();
+                readDTC.run(out, in);
                 troubleCodes = readDTC.getTroubleCodes();
                 System.out.println(troubleCodes);
 
@@ -130,7 +136,12 @@ public class ReadCodesVehicle extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-
+            Intent intent = new Intent(this, CarInfo.class);
+            intent.putExtra("versionELM", versionELM);
+            intent.putExtra("protocol", selectedProtocolInfo);
+            intent.putParcelableArrayListExtra("troubleCodes", (ArrayList<? extends Parcelable>) troubleCodes);
+            startActivity(intent);
+        }
         else
             finish();
     }

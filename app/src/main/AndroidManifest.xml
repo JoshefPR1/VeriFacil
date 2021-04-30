@@ -15,7 +15,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
-        <activity android:name=".ReadCodesVehicle"></activity>
+        <activity android:name=".CarInfo"></activity>
+        <activity android:name=".ReadCodesVehicle" />
         <activity android:name=".FindDevice" />
         <activity android:name=".MainActivity">
             <intent-filter>
@@ -24,7 +25,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".BluetoothService"/>
+
+        <service android:name=".BluetoothService" />
     </application>
 
 </manifest>
