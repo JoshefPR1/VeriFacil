@@ -3,6 +3,8 @@ package com.TT.verifacil;
 import org.apache.commons.codec.DecoderException;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import Utils.ATCommands.ATZ;
@@ -10,6 +12,10 @@ import Utils.Command;
 import Utils.OBDCommands.CountDTC;
 import Utils.OBDCommands.ReadDTC;
 import Utils.TroubleCode;
+import Utils.TroubleCodeService;
+import retrofit2.Call;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 import static org.junit.Assert.*;
 
@@ -69,4 +75,16 @@ public class ExampleUnitTest {
 //        Command.hasError("UNABLE TO CONNECT");
     }
 
+    @Test
+    public void APIRetriveCodes_isCorrect() throws IOException {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://s834259532.onlinehome.mx/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        TroubleCodeService postService = retrofit.create(TroubleCodeService.class);
+        Call<List<TroubleCode.APITroubleCode>> call = postService.getTroubleCode();
+
+        System.out.println(call.execute().body());
+    }
 }

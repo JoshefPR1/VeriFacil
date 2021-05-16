@@ -1,18 +1,23 @@
 package com.TT.verifacil;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +30,13 @@ public class CarInfo extends AppCompatActivity {
     private TextView mVersionELMValue;
     private TextView mProtocolValue;
     private ListView mListTroubleCodes;
+    private LinearLayout mLLListCodesView;
+    private TextView mNoCodesDisplay;
+    private Button mSendCodesButton;
+
+    private Protocol protocolSelected;
+    private String versionELM;
+    private List<TroubleCode> troubleCodes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,18 +44,40 @@ public class CarInfo extends AppCompatActivity {
         setContentView(R.layout.activity_car_info);
         Intent intent = getIntent();
 
-        Protocol protocolSelected = (Protocol) intent.getSerializableExtra("protocol");
-        String versionELM = intent.getStringExtra("versionELM");
-        List<TroubleCode> troubleCodes = intent.getParcelableArrayListExtra("troubleCodes");
+        protocolSelected = (Protocol) intent.getSerializableExtra("protocol");
+        versionELM = intent.getStringExtra("versionELM");
+        troubleCodes = intent.getParcelableArrayListExtra("troubleCodes");
 
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    @Override
+    protected void onStart() {
+        super.onStart();
         mVersionELMValue = (TextView) findViewById(R.id.versionValueText);
         mProtocolValue = (TextView) findViewById(R.id.protocolValueText);
-        mListTroubleCodes = (ListView) findViewById(R.id.listDTCs);
-
-        AdapterTroubleCode adapter = new AdapterTroubleCode(this,0,troubleCodes);
-        mListTroubleCodes.setAdapter(adapter);
         mVersionELMValue.setText(versionELM);
         mProtocolValue.setText(protocolSelected.getDescription());
+
+        if (troubleCodes == null || troubleCodes.isEmpty()) {
+            mLLListCodesView = (LinearLayout) findViewById(R.id.listCodesView);
+            mNoCodesDisplay = (TextView) findViewById(R.id.noCodesDisplay);
+            mSendCodesButton = (Button) findViewById(R.id.sendCodesButton);
+            mLLListCodesView.setVisibility(View.GONE);
+            mSendCodesButton.setVisibility(View.GONE);
+            mNoCodesDisplay.setVisibility(View.VISIBLE);
+
+        }else {
+            mListTroubleCodes = (ListView) findViewById(R.id.listDTCs);
+            AdapterTroubleCode adapter = new AdapterTroubleCode(this,0,new ArrayList<>());
+            mListTroubleCodes.setAdapter(adapter);
+            try {
+                TroubleCode.getDescriptions(troubleCodes, adapter);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
 
     }
 

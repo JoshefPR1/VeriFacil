@@ -97,7 +97,7 @@ public class ReadCodesVehicle extends AppCompatActivity {
 
         List<TroubleCode> troubleCodes = null;
         String versionELM = "";
-        String selectedProtocolInfo = "";
+        Protocol selectedProtocolInfo = null;
 
         if (mBTService.getState() == BluetoothService.STATE_CONNECTED) {
             // Starts procedure for request DTC
@@ -121,13 +121,15 @@ public class ReadCodesVehicle extends AppCompatActivity {
                         return;
                     readDTC.setISO(true);
                 }
-                selectedProtocolInfo = selectedProtocol.getProtocol().getDescription();
+                selectedProtocolInfo = selectedProtocol.getProtocol();
                 readDTC.run(out, in);
                 troubleCodes = readDTC.getTroubleCodes();
                 System.out.println(troubleCodes);
 
             } catch (IOException e) {
                 e.printStackTrace();
+//                mBTService.connectionLost();
+                finish();
             } catch (ExecutionException e) {
                 e.printStackTrace();
             } catch (InterruptedException e) {
@@ -141,43 +143,17 @@ public class ReadCodesVehicle extends AppCompatActivity {
             intent.putExtra("protocol", selectedProtocolInfo);
             intent.putParcelableArrayListExtra("troubleCodes", (ArrayList<? extends Parcelable>) troubleCodes);
             startActivity(intent);
+            finish();
         }
         else
             finish();
     }
 
-    private final Handler mHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case MESSAGE_WRITE:
-                    byte[] writeBuf = (byte[]) msg.obj;
-                    // construct a string from the buffer
-                    String writeMessage = new String(writeBuf);
-                    //mAdapter.notifyDataSetChanged();
-                    //messageList.add(new androidRecyclerView.Message(counter++, writeMessage, "Me"));
-                    break;
-                case MESSAGE_READ:
-                   /* byte[] readBuf = (byte[]) msg.obj;
-                    // construct a string from the valid bytes in the buffer
-                    String readMessage = new String(readBuf, 0, msg.arg1);*/
-                    //mAdapter.notifyDataSetChanged();
-                    //messageList.add(new androidRecyclerView.Message(counter++, readMessage, mConnectedDeviceName));
-//                    mMessageReceived.add(msg.obj.toString());
-                    break;
-                case MESSAGE_DEVICE_NAME:
-                    // save the connected device's name
-                    mConnectedDeviceName = msg.getData().getString(DEVICE_NAME);
-                    Toast.makeText(getApplicationContext(), "Connected to "
-                            + mConnectedDeviceName, Toast.LENGTH_SHORT).show();
-                    break;
-                case MESSAGE_TOAST:
-                    Toast.makeText(getApplicationContext(), msg.getData().getString(TOAST),
-                            Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
-    };
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(connection);
+    }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -188,17 +164,8 @@ public class ReadCodesVehicle extends AppCompatActivity {
                         BluetoothAdapter.ERROR);
                 switch (state) {
                     case BluetoothAdapter.STATE_OFF:
-                        /*MyArrayAdapter adapter = (MyArrayAdapter) deviceSpinner.getAdapter();
-                        if (adapter != null) {
-                            adapter.clear();
-                            adapter.notifyDataSetChanged();
-                        }
-                        break;*/
                         Toast.makeText(context,"Se ha apagado el adaptador de Bluetooth",Toast.LENGTH_LONG).show();
                         finish();
-                    case BluetoothAdapter.STATE_ON:
-                        /*populateDeviceSpinner();
-                        break;*/
                 }
             }
         }
@@ -212,7 +179,6 @@ public class ReadCodesVehicle extends AppCompatActivity {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
             BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
             mBTService = binder.getService();
-            mBTService.setActivityHandler(mHandler);
             mBound = true;
             readCodes();
         }

@@ -73,6 +73,10 @@ public class MainActivity extends AppCompatActivity{
     private TextView mReadyReadDisplay;
     private Button mReadCodes;
     private TextView mWelcomeDisplay;
+    private Button mRequestPermButton;
+    private TextView mRequestPermDisplay;
+    private Button mRequestBTOnButton;
+    private TextView mRequestBTOnDisplay;
 
     private String mConnectedDeviceName = null;
     private String addressDeviceSelected;
@@ -98,6 +102,11 @@ public class MainActivity extends AppCompatActivity{
         mReadyReadDisplay = (TextView)findViewById(R.id.readyDisplay);
         mWelcomeDisplay = (TextView)findViewById(R.id.welcomeDisplay);
         mReadCodes = (Button) findViewById(R.id.readCodesButton);
+        mRequestPermButton = (Button) findViewById(R.id.requestPermButton);
+        mRequestPermDisplay = (TextView) findViewById(R.id.requestPermDisplay);
+        mRequestBTOnButton = (Button) findViewById(R.id.requestBTOnButton);
+        mRequestBTOnDisplay = (TextView) findViewById(R.id.requestBTOnDisplay);
+
         mFindDevice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -110,31 +119,64 @@ public class MainActivity extends AppCompatActivity{
                 readCodes();
             }
         });
+        mRequestPermButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                requestPerm();
+            }
+        });
+
+        mRequestBTOnButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                checkBluetoothEnabled();
+            }
+        });
+
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-//        mBTService = new BluetoothService(this, mHandler);
+        // TODO(0): Hacer que cuando se regrese a este activity se verifique si hay un bind y el estado de la conexión
+
+        setViewConnectReadyState();
+        // Verficamos que se tengan los permisos necesarios en el dispositivo
+        requestPerm();
+
+        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        filter.addAction(BluetoothService.CONNECTION_STATUS);
+        registerReceiver(mReceiver, filter);
+    }
+
+    private void requestPerm() {
         // Verficamos que se tengan los permisos necesarios en el dispositivo
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.ACCESS_FINE_LOCATION) ==
                 PackageManager.PERMISSION_GRANTED) {
             // Se verifica si el bluetooth está activo
+            setViewConnectReadyState();
             checkBluetoothEnabled();
         }else {
             // Si no se cuenta con los permisos es necesario que se solicite al usuario los permisos necesarios
             // Se crea un request para solicitar los permisos
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.ACCESS_COARSE_LOCATION
-                    },200);
+            ActivityCompat.requestPermissions(MainActivity.this
+                    ,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}
+                    ,200);
         }
+    }
 
-        IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
-        filter.addAction(BluetoothService.CONNECTION_STATUS);
-        registerReceiver(mReceiver, filter);
+    @Override
+    protected void onStop() {
+        super.onStop();
+        unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        Intent intent = new Intent(this, BluetoothService.class);
+        stopService(intent);
     }
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -144,14 +186,13 @@ public class MainActivity extends AppCompatActivity{
             // Se verifica la respuesta obtenida, para evitar errores
             case 200:
                 // Se verifica si los permisos fueron otorgados
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED || grantResults[1] == PackageManager.PERMISSION_GRANTED){
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED){
                     // Se verifica si el bluetooth está activo
                     checkBluetoothEnabled();
+                    setViewConnectReadyState();
                 } else {
                     // Si no se otorga el permiso, mostramos un mensaje y cerramos la aplicación
-                    //TODO(2): Mejorar el mesaje para volver a solicitar la activación del bluetooth
-                    Toast.makeText(this,"Permiso no se otorgó, adiós",Toast.LENGTH_LONG).show();
-                    finish();
+                    setViewRequestPermState();
                 }
                 break;
             default:
@@ -196,11 +237,18 @@ public class MainActivity extends AppCompatActivity{
                     String address = data.getExtras().getString(FindDevice.EXTRA_DEVICE_ADDRESS);
                     addressDeviceSelected = address;
                     DeviceSelected = true;
-
-                    Intent intent = new Intent(this,BluetoothService.class);
-                    intent.putExtra("BTAddress", addressDeviceSelected);
-                    startService(intent);
-                    bindService(intent,connection,Context.BIND_AUTO_CREATE);
+                    if(mBTService == null) {
+                        Intent intent = new Intent(this, BluetoothService.class);
+                        intent.putExtra("BTAddress", addressDeviceSelected);
+                        startService(intent);
+                        bindService(intent, connection, Context.BIND_AUTO_CREATE);
+                    }else {
+                        try {
+                            mBTService.connect(addressDeviceSelected);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
                     setViewConnectingState();
                 }
                 // Cuando DeviceListActivity retorna un error
@@ -216,8 +264,7 @@ public class MainActivity extends AppCompatActivity{
                 } else {
                     // El usuario no permitió que se activara el Bluetooth
                     Toast.makeText(this, "El bluetooth debe estar activo para poder utilizar la aplicación.", Toast.LENGTH_SHORT).show();
-                    // Cerramos la aplicación
-                    finish();
+                    setViewRequestBTOnState();
                 }
                 break;
             default:
@@ -233,6 +280,10 @@ public class MainActivity extends AppCompatActivity{
         mWelcomeDisplay.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.GONE);
         mReadCodes.setVisibility(View.GONE);
+        mRequestPermButton.setVisibility(View.GONE);
+        mRequestPermDisplay.setVisibility(View.GONE);
+        mRequestBTOnButton.setVisibility(View.GONE);
+        mRequestBTOnDisplay.setVisibility(View.GONE);
     }
 
     // Esta función se utiliza para mostrar los views necesarios cuando se va a relizar la lectura de los códigos de error
@@ -242,6 +293,11 @@ public class MainActivity extends AppCompatActivity{
         mWelcomeDisplay.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.GONE);
         mReadCodes.setVisibility(View.VISIBLE);
+        mRequestPermButton.setVisibility(View.GONE);
+        mRequestPermDisplay.setVisibility(View.GONE);
+        mRequestBTOnButton.setVisibility(View.GONE);
+        mRequestBTOnDisplay.setVisibility(View.GONE);
+
     }
 
     // Esta función se utiliza para mostrar los views necesarios cuando se requiere iniciar con la conexión
@@ -251,8 +307,48 @@ public class MainActivity extends AppCompatActivity{
         mWelcomeDisplay.setVisibility(View.VISIBLE);
         mReadCodes.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.VISIBLE);
+        mRequestPermButton.setVisibility(View.GONE);
+        mRequestPermDisplay.setVisibility(View.GONE);
+        mRequestBTOnButton.setVisibility(View.GONE);
+        mRequestBTOnDisplay.setVisibility(View.GONE);
+
+        if(mBTService != null){
+            Intent intent = new Intent(this,BluetoothService.class);
+            unbindService(connection);
+            stopService(intent);
+            mBTService = null;
+        }
         DeviceSelected = false;
     }
+
+    // Esta función se utiliza para mostrar los views necesarios cuando se va a solicitar de nuevo los permisos
+    private void setViewRequestPermState (){
+        mLoadingDisplay.setVisibility(View.GONE);
+        mReadyReadDisplay.setVisibility(View.GONE);
+        mWelcomeDisplay.setVisibility(View.GONE);
+        mFindDevice.setVisibility(View.GONE);
+        mReadCodes.setVisibility(View.GONE);
+        mRequestPermButton.setVisibility(View.VISIBLE);
+        mRequestPermDisplay.setVisibility(View.VISIBLE);
+        mRequestBTOnButton.setVisibility(View.GONE);
+        mRequestBTOnDisplay.setVisibility(View.GONE);
+
+    }
+
+    // Esta función se utiliza para mostrar los views necesarios cuando se va a solicitar de nuevo los permisos
+    private void setViewRequestBTOnState (){
+        mLoadingDisplay.setVisibility(View.GONE);
+        mReadyReadDisplay.setVisibility(View.GONE);
+        mWelcomeDisplay.setVisibility(View.GONE);
+        mFindDevice.setVisibility(View.GONE);
+        mReadCodes.setVisibility(View.GONE);
+        mRequestPermButton.setVisibility(View.GONE);
+        mRequestPermDisplay.setVisibility(View.GONE);
+        mRequestBTOnButton.setVisibility(View.VISIBLE);
+        mRequestBTOnDisplay.setVisibility(View.VISIBLE);
+
+    }
+
     //TODO(1): Quitar Handler
     private final Handler mHandler = new Handler() {
         @Override
@@ -282,17 +378,11 @@ public class MainActivity extends AppCompatActivity{
                         BluetoothAdapter.ERROR);
                 switch (state) {
                     case BluetoothAdapter.STATE_OFF:
-                        /*MyArrayAdapter adapter = (MyArrayAdapter) deviceSpinner.getAdapter();
-                        if (adapter != null) {
-                            adapter.clear();
-                            adapter.notifyDataSetChanged();
-                        }
-                        break;*/
                         Toast.makeText(context,"Se ha apagado el adaptador de Bluetooth",Toast.LENGTH_LONG).show();
-                        //TODO(0): Solicitar activar Bluetooth
+                        setViewRequestBTOnState();
                     case BluetoothAdapter.STATE_ON:
-                        /*populateDeviceSpinner();
-                        break;*/
+                        setViewConnectReadyState();
+                        break;
                 }
             }
             if (action.equals(BluetoothService.CONNECTION_STATUS)){
@@ -325,6 +415,12 @@ public class MainActivity extends AppCompatActivity{
             BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
             mBTService = binder.getService();
             //TODO(3): Quitar cuando se quite el handler
+            try {
+                mBTService.connect(addressDeviceSelected);
+            } catch (IOException e) {
+                e.printStackTrace();
+                setViewConnectReadyState();
+            }
             mBTService.setActivityHandler(mHandler);
             mBound = true;
         }

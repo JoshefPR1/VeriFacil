@@ -39,6 +39,8 @@ public class ReadDTC extends OBDCommand {
             if(isISO){
                 frame = frame.substring(2);
             }
+            if(frame.length()<4)
+                return;
             String[] textCodes = Iterables.toArray(Splitter.fixedLength(4).split(frame),String.class);
             for (String textCode : textCodes){
                 System.out.println(textCode);
