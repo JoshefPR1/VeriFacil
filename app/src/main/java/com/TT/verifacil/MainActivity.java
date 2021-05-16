@@ -24,6 +24,7 @@ import android.os.Message;
 import android.os.Parcelable;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -77,6 +78,7 @@ public class MainActivity extends AppCompatActivity{
     private TextView mRequestPermDisplay;
     private Button mRequestBTOnButton;
     private TextView mRequestBTOnDisplay;
+    private ProgressBar mConectingPB;
 
     private String mConnectedDeviceName = null;
     private String addressDeviceSelected;
@@ -106,6 +108,7 @@ public class MainActivity extends AppCompatActivity{
         mRequestPermDisplay = (TextView) findViewById(R.id.requestPermDisplay);
         mRequestBTOnButton = (Button) findViewById(R.id.requestBTOnButton);
         mRequestBTOnDisplay = (TextView) findViewById(R.id.requestBTOnDisplay);
+        mConectingPB = (ProgressBar) findViewById(R.id.conectingPB);
 
         mFindDevice.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -284,6 +287,7 @@ public class MainActivity extends AppCompatActivity{
         mRequestPermDisplay.setVisibility(View.GONE);
         mRequestBTOnButton.setVisibility(View.GONE);
         mRequestBTOnDisplay.setVisibility(View.GONE);
+        mConectingPB.setVisibility(View.VISIBLE);
     }
 
     // Esta función se utiliza para mostrar los views necesarios cuando se va a relizar la lectura de los códigos de error
@@ -297,6 +301,7 @@ public class MainActivity extends AppCompatActivity{
         mRequestPermDisplay.setVisibility(View.GONE);
         mRequestBTOnButton.setVisibility(View.GONE);
         mRequestBTOnDisplay.setVisibility(View.GONE);
+        mConectingPB.setVisibility(View.GONE);
 
     }
 
@@ -311,6 +316,7 @@ public class MainActivity extends AppCompatActivity{
         mRequestPermDisplay.setVisibility(View.GONE);
         mRequestBTOnButton.setVisibility(View.GONE);
         mRequestBTOnDisplay.setVisibility(View.GONE);
+        mConectingPB.setVisibility(View.GONE);
 
         if(mBTService != null){
             Intent intent = new Intent(this,BluetoothService.class);
@@ -332,6 +338,7 @@ public class MainActivity extends AppCompatActivity{
         mRequestPermDisplay.setVisibility(View.VISIBLE);
         mRequestBTOnButton.setVisibility(View.GONE);
         mRequestBTOnDisplay.setVisibility(View.GONE);
+        mConectingPB.setVisibility(View.GONE);
 
     }
 
@@ -346,7 +353,7 @@ public class MainActivity extends AppCompatActivity{
         mRequestPermDisplay.setVisibility(View.GONE);
         mRequestBTOnButton.setVisibility(View.VISIBLE);
         mRequestBTOnDisplay.setVisibility(View.VISIBLE);
-
+        mConectingPB.setVisibility(View.GONE);
     }
 
     //TODO(1): Quitar Handler

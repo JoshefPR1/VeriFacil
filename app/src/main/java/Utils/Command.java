@@ -70,6 +70,7 @@ public abstract class Command {
         };
 
         for (String error : errors){
+            error = error.replaceAll("\\s","");
             if(this.resultText.matches(".*"+error+".*"))
                 throw new ExecutionException(
                         "Se encontró un error de tipo:" + error ,

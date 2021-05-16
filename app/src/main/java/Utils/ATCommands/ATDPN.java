@@ -9,7 +9,7 @@ public class ATDPN extends ATCommand {
     @Override
     protected void interpretResult() {
         String resultNoSpace = this.resultText.replaceAll(" ","");
-        String idProtocol = resultNoSpace.replaceAll("A","");
+        String idProtocol = resultNoSpace.replaceFirst("A","");
         this.protocol = Protocol.find(idProtocol);
     }
 

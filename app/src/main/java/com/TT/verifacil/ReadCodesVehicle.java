@@ -13,8 +13,13 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.os.Message;
 import android.os.Parcelable;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.apache.commons.codec.DecoderException;
@@ -26,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import Utils.ATCommands.ATAL;
 import Utils.ATCommands.ATDPN;
@@ -55,22 +62,58 @@ public class ReadCodesVehicle extends AppCompatActivity {
     private String mConnectedDeviceName = null;
     private boolean mBound = false;
 
+    private TextView welcomeDisplay;
+    private ProgressBar readProgressBar;
+    private TextView errorDisplay;
+    private Button tryAgainButton;
+
+    private ExecutorService executor;
+    Handler handler;
+
+
+    List<TroubleCode> troubleCodes = null;
+    String versionELM = "";
+    Protocol selectedProtocolInfo = null;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_read_codes_vehicle);
 
-        /*Intent intent = this.getIntent();
-
-        mBTDeviceAddress = intent.getStringExtra("BTDeviceAddress");
-
-        mBTService = new BluetoothService(this,mHandler);
-
-        BluetoothDevice device = BluetoothAdapter.getDefaultAdapter().getRemoteDevice(mBTDeviceAddress);
-
-        mBTService.connect(device);*/
         Intent intent = new Intent(this, BluetoothService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+        welcomeDisplay = (TextView) findViewById(R.id.readingCodesDisplay);
+        readProgressBar = (ProgressBar) findViewById(R.id.readProgressBar);
+        errorDisplay = (TextView) findViewById(R.id.errorDisplay);
+        tryAgainButton = (Button) findViewById(R.id.buttonTryAgain);
+
+        tryAgainButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                setViewReadingState();
+                executeReadCodes();
+            }
+        });
+
+        executor = Executors.newSingleThreadExecutor();
+        handler = new Handler(Looper.getMainLooper());
+
+        setViewReadingState();
+    }
+
+    private void setViewReadingState(){
+        welcomeDisplay.setVisibility(View.VISIBLE);
+        readProgressBar.setVisibility(View.VISIBLE);
+        errorDisplay.setVisibility(View.GONE);
+        tryAgainButton.setVisibility(View.GONE);
+    }
+    private void setViewErrorState(){
+        welcomeDisplay.setVisibility(View.GONE);
+        readProgressBar.setVisibility(View.GONE);
+        errorDisplay.setVisibility(View.VISIBLE);
+        tryAgainButton.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -83,7 +126,7 @@ public class ReadCodesVehicle extends AppCompatActivity {
         super.onResume();
     }
 
-    private void readCodes(){
+    private boolean readCodes(){
         InputStream in = mBTService.getMmInStream();
         OutputStream out = mBTService.getMmOutStream();
 
@@ -95,30 +138,26 @@ public class ReadCodesVehicle extends AppCompatActivity {
         CountDTC countDTC = new CountDTC();
         ReadDTC readDTC = new ReadDTC();
 
-        List<TroubleCode> troubleCodes = null;
-        String versionELM = "";
-        Protocol selectedProtocolInfo = null;
-
         if (mBTService.getState() == BluetoothService.STATE_CONNECTED) {
             // Starts procedure for request DTC
             try {
                 // Reset ELM
                 reset.run(out, in);
                 if (!reset.isOK())
-                    return;
+                    return false;
                 versionELM = reset.getELMVersion();
                 echoOff.run(out, in);
                 if (!echoOff.isOK())
-                    return;
+                    return false;
                 selectProtocol.run(out, in);
                 if (!selectProtocol.isOK())
-                    return;
+                    return false;
                 selectedProtocol.run(out, in);
                 List<String> isoIds = Arrays.asList("6", "7", "8", "9");
                 if (isoIds.contains(selectedProtocol.getProtocol().getId())) {
                     longMessage.run(out, in);
                     if (!longMessage.isOK())
-                        return;
+                        return false;
                     readDTC.setISO(true);
                 }
                 selectedProtocolInfo = selectedProtocol.getProtocol();
@@ -128,25 +167,22 @@ public class ReadCodesVehicle extends AppCompatActivity {
 
             } catch (IOException e) {
                 e.printStackTrace();
-//                mBTService.connectionLost();
-                finish();
+                mBTService.connectionLost();
+                return false;
             } catch (ExecutionException e) {
                 e.printStackTrace();
+                return false;
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                return false;
             } catch (DecoderException e) {
                 e.printStackTrace();
+                return false;
             }
-
-            Intent intent = new Intent(this, CarInfo.class);
-            intent.putExtra("versionELM", versionELM);
-            intent.putExtra("protocol", selectedProtocolInfo);
-            intent.putParcelableArrayListExtra("troubleCodes", (ArrayList<? extends Parcelable>) troubleCodes);
-            startActivity(intent);
-            finish();
+            return true;
         }
         else
-            finish();
+            return false;
     }
 
     @Override
@@ -171,6 +207,28 @@ public class ReadCodesVehicle extends AppCompatActivity {
         }
     };
 
+    private void executeReadCodes(){
+        executor.execute(()-> {
+            if (readCodes()){
+                handler.post(()->{
+                    Intent intent = new Intent(ReadCodesVehicle.this, CarInfo.class);
+                    intent.putExtra("versionELM", versionELM);
+                    intent.putExtra("protocol", selectedProtocolInfo);
+                    intent.putParcelableArrayListExtra("troubleCodes", (ArrayList<? extends Parcelable>) troubleCodes);
+                    startActivity(intent);
+                    finish();
+                });
+            }
+            else {
+                handler.post(()->{
+                    setViewErrorState();
+                    if (mBTService.getState() != BluetoothService.STATE_CONNECTED)
+                        finish();
+                });
+            }
+        });
+    }
+
     private ServiceConnection connection = new ServiceConnection() {
 
         @Override
@@ -180,7 +238,8 @@ public class ReadCodesVehicle extends AppCompatActivity {
             BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder) service;
             mBTService = binder.getService();
             mBound = true;
-            readCodes();
+            executeReadCodes();
+
         }
 
         @Override
