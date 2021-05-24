@@ -113,7 +113,6 @@ public class CarInfo extends AppCompatActivity {
         public class ViewHolder {
             public TextView display_name;
             public TextView display_desc;
-
         }
 
         public View getView(int position, View convertView, ViewGroup parent) {

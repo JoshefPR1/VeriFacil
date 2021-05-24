@@ -19,11 +19,11 @@ public class ECU {
     private boolean supp1C;
 
     private List<Monitor> supportedMonitorsB;
-    private int[] completeMonitorsB;
+    private List<Integer> completeMonitorsB;
     private List<Monitor> supportedMonitorsC;
-    private int[] completeMonitorsC;
+    private List<Integer> completeMonitorsC;
 
-    ECU(String id){
+    public ECU(String id){
         this.id = id;
     }
 
@@ -43,7 +43,7 @@ public class ECU {
         return supportedMonitorsB;
     }
 
-    public int[] getCompleteMonitorsB() {
+    public List<Integer> getCompleteMonitorsB() {
         return completeMonitorsB;
     }
 
@@ -51,7 +51,7 @@ public class ECU {
         return supportedMonitorsC;
     }
 
-    public int[] getCompleteMonitorsC() {
+    public List<Integer> getCompleteMonitorsC() {
         return completeMonitorsC;
     }
 
@@ -65,11 +65,75 @@ public class ECU {
     
     @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean isUncompletedMonitorB(){
-        return Arrays.stream(completeMonitorsB).anyMatch(x -> x==1);
+        return completeMonitorsB.stream().anyMatch(x -> x==1);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     public boolean isUncompletedMonitorC(){
-        return Arrays.stream(completeMonitorsC).anyMatch(x -> x==1);
+        return completeMonitorsC.stream().anyMatch(x -> x==1);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.N)
+    public static ECU findECU(String id,List<ECU> ecus){
+        return ecus.stream()
+                .filter(cd -> id.equals(cd.getId()))
+                .findAny()
+                .orElse(null);
+    }
+
+    public boolean isSupp01() {
+        return supp01;
+    }
+
+    public void setSupp01(boolean supp01) {
+        this.supp01 = supp01;
+    }
+
+    public boolean isSupp0C() {
+        return supp0C;
+    }
+
+    public void setSupp0C(boolean supp0C) {
+        this.supp0C = supp0C;
+    }
+
+    public boolean isSupp1C() {
+        return supp1C;
+    }
+
+    public void setSupp1C(boolean supp1C) {
+        this.supp1C = supp1C;
+    }
+
+    public void setSupportedMonitorsB(List<Monitor> supportedMonitorsB) {
+        this.supportedMonitorsB = supportedMonitorsB;
+    }
+
+    public void setCompleteMonitorsB(List<Integer> completeMonitorsB) {
+        this.completeMonitorsB = completeMonitorsB;
+    }
+
+    public void setSupportedMonitorsC(List<Monitor> supportedMonitorsC) {
+        this.supportedMonitorsC = supportedMonitorsC;
+    }
+
+    public void setCompleteMonitorsC(List<Integer> completeMonitorsC) {
+        this.completeMonitorsC = completeMonitorsC;
+    }
+
+    @Override
+    public String toString() {
+        return "ECU{" +
+                "id='" + id + '\'' +
+                ", isMILOn=" + isMILOn +
+                ", numDTC=" + numDTC +
+                ", supp01=" + supp01 +
+                ", supp0C=" + supp0C +
+                ", supp1C=" + supp1C +
+                ", supportedMonitorsB=" + supportedMonitorsB +
+                ", completeMonitorsB=" + completeMonitorsB +
+                ", supportedMonitorsC=" + supportedMonitorsC +
+                ", completeMonitorsC=" + completeMonitorsC +
+                '}';
     }
 }

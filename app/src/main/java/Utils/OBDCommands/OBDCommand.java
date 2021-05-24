@@ -27,4 +27,12 @@ public abstract class OBDCommand extends Command {
         }
     }
 
+    protected String headerISO(String header){
+        return header.substring(0,3);
+    }
+
+    protected String headerNoISO(String header){
+        return header.substring(4);
+    }
+
 }

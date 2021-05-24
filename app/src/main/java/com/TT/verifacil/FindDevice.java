@@ -136,7 +136,8 @@ public class FindDevice extends AppCompatActivity {
                     listDiscoveredDevices.add(device);
                     mNewDevicesArrayAdapter.add(device.getName() + "\n" + device.getAddress());
                 }
-            }else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
+            }
+            else if(BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)){
                 setProgressBarIndeterminateVisibility(false);
                 setTitle("Selcciona un dispositivo para conectar");
                 if (mNewDevicesArrayAdapter.getCount() == 0){

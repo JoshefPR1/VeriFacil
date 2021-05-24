@@ -1,6 +1,7 @@
 package com.TT.verifacil;
 
 import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -86,5 +87,12 @@ public class ExampleUnitTest {
         Call<List<TroubleCode.APITroubleCode>> call = postService.getTroubleCode();
 
         System.out.println(call.execute().body());
+    }
+
+    @Test
+    public void Pruebas_isCorrect() throws DecoderException {
+        System.out.println(Integer.parseInt("FFFF",16));
+        System.out.println(Integer.parseInt("10101010101",2));
+        System.out.println(Hex.decodeHex("FFFF".toCharArray())[0]);
     }
 }

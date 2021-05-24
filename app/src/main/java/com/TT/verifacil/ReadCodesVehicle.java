@@ -45,21 +45,9 @@ import Utils.OBDCommands.ReadDTC;
 import Utils.TroubleCode;
 
 public class ReadCodesVehicle extends AppCompatActivity {
-    public static final int MESSAGE_STATE_CHANGE = 1;
-    public static final int MESSAGE_READ = 2;
-    public static final int MESSAGE_WRITE = 3;
-    public static final int MESSAGE_DEVICE_NAME = 4;
-    public static final int MESSAGE_TOAST = 5;
 
-    BluetoothAdapter mBluetoothAdapter;
-    private String mBTDeviceAddress;
     private BluetoothService mBTService;
 
-    // Key names received from the BluetoothChatService Handler
-    public static final String DEVICE_NAME = "device_name";
-    public static final String TOAST = "toast";
-
-    private String mConnectedDeviceName = null;
     private boolean mBound = false;
 
     private TextView welcomeDisplay;
@@ -68,12 +56,12 @@ public class ReadCodesVehicle extends AppCompatActivity {
     private Button tryAgainButton;
 
     private ExecutorService executor;
-    Handler handler;
+    private Handler handler;
 
 
-    List<TroubleCode> troubleCodes = null;
-    String versionELM = "";
-    Protocol selectedProtocolInfo = null;
+    private List<TroubleCode> troubleCodes = null;
+    private String versionELM = "";
+    private Protocol selectedProtocolInfo = null;
 
 
     @Override
@@ -103,19 +91,6 @@ public class ReadCodesVehicle extends AppCompatActivity {
         setViewReadingState();
     }
 
-    private void setViewReadingState(){
-        welcomeDisplay.setVisibility(View.VISIBLE);
-        readProgressBar.setVisibility(View.VISIBLE);
-        errorDisplay.setVisibility(View.GONE);
-        tryAgainButton.setVisibility(View.GONE);
-    }
-    private void setViewErrorState(){
-        welcomeDisplay.setVisibility(View.GONE);
-        readProgressBar.setVisibility(View.GONE);
-        errorDisplay.setVisibility(View.VISIBLE);
-        tryAgainButton.setVisibility(View.VISIBLE);
-    }
-
     @Override
     protected void onStart() {
         super.onStart();
@@ -124,6 +99,26 @@ public class ReadCodesVehicle extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(connection);
+    }
+
+    private void setViewReadingState(){
+        welcomeDisplay.setVisibility(View.VISIBLE);
+        readProgressBar.setVisibility(View.VISIBLE);
+        errorDisplay.setVisibility(View.GONE);
+        tryAgainButton.setVisibility(View.GONE);
+    }
+
+    private void setViewErrorState(){
+        welcomeDisplay.setVisibility(View.GONE);
+        readProgressBar.setVisibility(View.GONE);
+        errorDisplay.setVisibility(View.VISIBLE);
+        tryAgainButton.setVisibility(View.VISIBLE);
     }
 
     private boolean readCodes(){
@@ -185,28 +180,6 @@ public class ReadCodesVehicle extends AppCompatActivity {
             return false;
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        unbindService(connection);
-    }
-
-    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
-                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
-                        BluetoothAdapter.ERROR);
-                switch (state) {
-                    case BluetoothAdapter.STATE_OFF:
-                        Toast.makeText(context,"Se ha apagado el adaptador de Bluetooth",Toast.LENGTH_LONG).show();
-                        finish();
-                }
-            }
-        }
-    };
-
     private void executeReadCodes(){
         executor.execute(()-> {
             if (readCodes()){
@@ -228,6 +201,22 @@ public class ReadCodesVehicle extends AppCompatActivity {
             }
         });
     }
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE,
+                        BluetoothAdapter.ERROR);
+                switch (state) {
+                    case BluetoothAdapter.STATE_OFF:
+                        Toast.makeText(context,"Se ha apagado el adaptador de Bluetooth",Toast.LENGTH_LONG).show();
+                        finish();
+                }
+            }
+        }
+    };
 
     private ServiceConnection connection = new ServiceConnection() {
 

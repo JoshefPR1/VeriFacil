@@ -36,7 +36,7 @@ public class CountDTC extends OBDCommand {
             String binaryString = BinaryCodec.toAsciiString(Hex.decodeHex(frame.substring(0,2).toCharArray()));
             this.isMILOn = binaryString.charAt(0) == '1';
             binaryString = binaryString.replaceFirst("1","0");
-            int num = Hex.decodeHex( Hex.encodeHex( BinaryCodec.fromAscii( binaryString.toCharArray() ) ) )[0];
+            int num = Integer.parseInt(binaryString,2);
 //            System.out.println(num);
             Arrays.fill(this.numDTC,num);
         }
