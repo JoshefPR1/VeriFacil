@@ -7,8 +7,6 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -16,38 +14,17 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.os.Parcelable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.apache.commons.codec.DecoderException;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-
-import Utils.ATCommands.ATAL;
-import Utils.ATCommands.ATDPN;
-import Utils.ATCommands.ATE_;
-import Utils.ATCommands.ATSP_;
-import Utils.ATCommands.ATZ;
-import Utils.ATCommands.Protocol;
-import Utils.OBDCommands.CountDTC;
-import Utils.OBDCommands.ReadDTC;
-import Utils.TroubleCode;
 
 public class MainActivity extends AppCompatActivity{
     // Tipos de mensajes enviados por el BluetoothChatService Handler
@@ -72,7 +49,7 @@ public class MainActivity extends AppCompatActivity{
     private Button mFindDevice;
     private TextView mLoadingDisplay;
     private TextView mReadyReadDisplay;
-    private Button mReadCodes;
+    private Button mVerification;
     private TextView mWelcomeDisplay;
     private Button mRequestPermButton;
     private TextView mRequestPermDisplay;
@@ -103,7 +80,7 @@ public class MainActivity extends AppCompatActivity{
         mLoadingDisplay = (TextView)findViewById(R.id.loadingDisplay);
         mReadyReadDisplay = (TextView)findViewById(R.id.readyDisplay);
         mWelcomeDisplay = (TextView)findViewById(R.id.welcomeDisplay);
-        mReadCodes = (Button) findViewById(R.id.readCodesButton);
+        mVerification = (Button) findViewById(R.id.verificationButton);
         mRequestPermButton = (Button) findViewById(R.id.requestPermButton);
         mRequestPermDisplay = (TextView) findViewById(R.id.requestPermDisplay);
         mRequestBTOnButton = (Button) findViewById(R.id.requestBTOnButton);
@@ -116,10 +93,10 @@ public class MainActivity extends AppCompatActivity{
                 findDevice();
             }
         });
-        mReadCodes.setOnClickListener(new View.OnClickListener() {
+        mVerification.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                readCodes();
+                verification();
             }
         });
         mRequestPermButton.setOnClickListener(new View.OnClickListener() {
@@ -230,6 +207,11 @@ public class MainActivity extends AppCompatActivity{
         startActivity(intent);
     }
 
+    private void verification(){
+        Intent intent = new Intent(this, Verification.class);
+        startActivity(intent);
+    }
+
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
@@ -282,7 +264,7 @@ public class MainActivity extends AppCompatActivity{
         mReadyReadDisplay.setVisibility(View.GONE);
         mWelcomeDisplay.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.GONE);
-        mReadCodes.setVisibility(View.GONE);
+        mVerification.setVisibility(View.GONE);
         mRequestPermButton.setVisibility(View.GONE);
         mRequestPermDisplay.setVisibility(View.GONE);
         mRequestBTOnButton.setVisibility(View.GONE);
@@ -296,7 +278,7 @@ public class MainActivity extends AppCompatActivity{
         mReadyReadDisplay.setVisibility(View.VISIBLE);
         mWelcomeDisplay.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.GONE);
-        mReadCodes.setVisibility(View.VISIBLE);
+        mVerification.setVisibility(View.VISIBLE);
         mRequestPermButton.setVisibility(View.GONE);
         mRequestPermDisplay.setVisibility(View.GONE);
         mRequestBTOnButton.setVisibility(View.GONE);
@@ -310,7 +292,7 @@ public class MainActivity extends AppCompatActivity{
         mLoadingDisplay.setVisibility(View.GONE);
         mReadyReadDisplay.setVisibility(View.GONE);
         mWelcomeDisplay.setVisibility(View.VISIBLE);
-        mReadCodes.setVisibility(View.GONE);
+        mVerification.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.VISIBLE);
         mRequestPermButton.setVisibility(View.GONE);
         mRequestPermDisplay.setVisibility(View.GONE);
@@ -333,7 +315,7 @@ public class MainActivity extends AppCompatActivity{
         mReadyReadDisplay.setVisibility(View.GONE);
         mWelcomeDisplay.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.GONE);
-        mReadCodes.setVisibility(View.GONE);
+        mVerification.setVisibility(View.GONE);
         mRequestPermButton.setVisibility(View.VISIBLE);
         mRequestPermDisplay.setVisibility(View.VISIBLE);
         mRequestBTOnButton.setVisibility(View.GONE);
@@ -348,7 +330,7 @@ public class MainActivity extends AppCompatActivity{
         mReadyReadDisplay.setVisibility(View.GONE);
         mWelcomeDisplay.setVisibility(View.GONE);
         mFindDevice.setVisibility(View.GONE);
-        mReadCodes.setVisibility(View.GONE);
+        mVerification.setVisibility(View.GONE);
         mRequestPermButton.setVisibility(View.GONE);
         mRequestPermDisplay.setVisibility(View.GONE);
         mRequestBTOnButton.setVisibility(View.VISIBLE);

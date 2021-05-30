@@ -40,8 +40,10 @@ import Utils.ATCommands.ATE_;
 import Utils.ATCommands.ATSP_;
 import Utils.ATCommands.ATZ;
 import Utils.ATCommands.Protocol;
+import Utils.ECU;
 import Utils.OBDCommands.CountDTC;
 import Utils.OBDCommands.ReadDTC;
+import Utils.OBDCommands.TypesOBD;
 import Utils.TroubleCode;
 
 public class ReadCodesVehicle extends AppCompatActivity {
@@ -60,16 +62,28 @@ public class ReadCodesVehicle extends AppCompatActivity {
 
 
     private List<TroubleCode> troubleCodes = null;
-    private String versionELM = "";
     private Protocol selectedProtocolInfo = null;
 
+    private List<ECU> ecus;
+    private String versionELM = "";
+    private Protocol protocolInfo = null;
+    private TypesOBD typeOBD;
+    private float engineRPM;
+    private VerificationResult.AdapterECU mEcusAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_read_codes_vehicle);
 
-        Intent intent = new Intent(this, BluetoothService.class);
+        Intent intent = getIntent();
+        versionELM = intent.getStringExtra("versionELM");
+        protocolInfo =(Protocol) intent.getSerializableExtra("protocol");
+        typeOBD = (TypesOBD) intent.getSerializableExtra("typeOBD");
+        engineRPM = intent.getFloatExtra("engineRPM", (float) 0.0);
+        ecus = intent.getParcelableArrayListExtra("ecus");
+
+        intent = new Intent(this, BluetoothService.class);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
         welcomeDisplay = (TextView) findViewById(R.id.readingCodesDisplay);
@@ -127,7 +141,7 @@ public class ReadCodesVehicle extends AppCompatActivity {
 
         ATZ reset = new ATZ();
         ATE_ echoOff = new ATE_(false);
-        ATSP_ selectProtocol = new ATSP_(Protocol.AUTO.getId());
+        ATSP_ selectProtocol = new ATSP_(protocolInfo.getId());
         ATDPN selectedProtocol = new ATDPN();
         ATAL longMessage = new ATAL();
         CountDTC countDTC = new CountDTC();
@@ -147,15 +161,8 @@ public class ReadCodesVehicle extends AppCompatActivity {
                 selectProtocol.run(out, in);
                 if (!selectProtocol.isOK())
                     return false;
-                selectedProtocol.run(out, in);
-                List<String> isoIds = Arrays.asList("6", "7", "8", "9");
-                if (isoIds.contains(selectedProtocol.getProtocol().getId())) {
-                    longMessage.run(out, in);
-                    if (!longMessage.isOK())
-                        return false;
-                    readDTC.setISO(true);
-                }
-                selectedProtocolInfo = selectedProtocol.getProtocol();
+
+                readDTC.setISO(protocolInfo.isISO());
                 readDTC.run(out, in);
                 troubleCodes = readDTC.getTroubleCodes();
                 System.out.println(troubleCodes);
@@ -186,7 +193,11 @@ public class ReadCodesVehicle extends AppCompatActivity {
                 handler.post(()->{
                     Intent intent = new Intent(ReadCodesVehicle.this, CarInfo.class);
                     intent.putExtra("versionELM", versionELM);
-                    intent.putExtra("protocol", selectedProtocolInfo);
+                    intent.putExtra("protocol", protocolInfo);
+                    intent.putParcelableArrayListExtra("ecus", (ArrayList<? extends Parcelable>) ecus);
+                    intent.putExtra("versionELM",versionELM);
+                    intent.putExtra("typeOBD", typeOBD);
+                    intent.putExtra("engineRPM",engineRPM);
                     intent.putParcelableArrayListExtra("troubleCodes", (ArrayList<? extends Parcelable>) troubleCodes);
                     startActivity(intent);
                     finish();

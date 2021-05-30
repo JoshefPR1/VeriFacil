@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -31,7 +29,7 @@
             android:text="Versión ELM327: "
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toBottomOf="@id/titleResult"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="15dp"
             android:layout_marginLeft="10dp"
             android:textSize="24sp"
             android:id="@+id/versionText"/>
@@ -42,17 +40,16 @@
             android:text="v1.0"
             app:layout_constraintTop_toBottomOf="@id/titleResult"
             app:layout_constraintLeft_toRightOf="@id/versionText"
-            android:layout_marginTop="20dp"
-            android:layout_marginLeft="10dp"
+            android:layout_marginTop="15dp"
             android:textSize="24sp"
-            android:id="@+id/versionValueText"/>
+            android:id="@+id/versionVRValueText"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Protocolo de comunicación: "
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toBottomOf="@id/versionText"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="15dp"
             android:layout_marginLeft="10dp"
             android:textSize="24sp"
             android:id="@+id/protocolText"/>
@@ -66,63 +63,55 @@
             android:layout_marginTop="10dp"
             android:layout_marginLeft="30dp"
             android:textSize="24sp"
-            android:id="@+id/protocolValueText"/>
+            android:id="@+id/protocolVRValueText"/>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Tipo OBD: "
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/protocolValueText"
+            app:layout_constraintTop_toBottomOf="@id/protocolVRValueText"
             android:layout_marginTop="15dp"
             android:layout_marginLeft="10dp"
             android:textSize="24sp"
-            android:id="@+id/tipoOBDCIText"/>
+            android:id="@+id/tipoOBDText"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="OBD II"
-            app:layout_constraintTop_toBottomOf="@id/protocolValueText"
-            app:layout_constraintLeft_toRightOf="@id/tipoOBDCIText"
+            app:layout_constraintTop_toBottomOf="@id/protocolVRValueText"
+            app:layout_constraintLeft_toRightOf="@id/tipoOBDText"
             android:layout_marginTop="15dp"
             android:textSize="24sp"
-            android:id="@+id/tipoOBDCIValueText"/>
+            android:id="@+id/tipoOBDValueText"/>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="2"
-        android:textSize="34sp"
-        android:text="En horabuena, tu automóvil no presenta ningún código de falla.\n Es muy probable que apruebes la verificación vehicular en la Ciudad de México."
-        android:paddingHorizontal="10dp"
-        android:paddingTop="50dp"
-        android:visibility="gone"
-        android:id="@+id/noCodesDisplay"/>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="3"
         android:orientation="vertical"
-        android:id="@+id/listCodesView">
+        android:id="@+id/listECUsView">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Códigos de falla:"
-            android:layout_marginTop="10dp"
+            android:text="ECUs del vehículo:"
+            android:layout_marginTop="5dp"
             android:layout_marginLeft="10dp"
-            android:textSize="36sp"
-            android:id="@+id/titleListDTCs"/>
+            android:textSize="32sp"
+            android:id="@+id/titleListECUs"/>
 
         <ListView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="25dp"
-            android:id="@+id/listDTCs"/>
+            android:id="@+id/listECUs"/>
     </LinearLayout>
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Determinar falla y solución"
-        android:id="@+id/sendCodesButton"/>
+        android:text="Leer códigos de error"
+        android:id="@+id/readCodesVRButton"
+        android:visibility="gone"/>
 </LinearLayout>

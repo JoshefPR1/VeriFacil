@@ -1,4 +1,4 @@
-package com.TT.verifacil;
+ package com.TT.verifacil;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.Parcelable;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -23,6 +24,7 @@ import org.apache.commons.codec.DecoderException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -99,6 +101,7 @@ public class Verification extends AppCompatActivity {
 
     private void setViewReadingInfoState(){
         actionDisplay.setVisibility(View.VISIBLE);
+        actionDisplay.setText(getResources().getString(R.string.selectingCommProtocolDisplay));
         readProgressBar.setVisibility(View.VISIBLE);
         errorDisplay.setVisibility(View.GONE);
         tryAgainButton.setVisibility(View.GONE);
@@ -120,10 +123,14 @@ public class Verification extends AppCompatActivity {
         ATSP_ selectProtocol = new ATSP_(Protocol.AUTO.getId());
         ATDPN selectedProtocol = new ATDPN();
 
+        ATH_ headerOn = new ATH_(true);
+        SupportedPIDs suppPIDs = new SupportedPIDs();
+
         if (mBTService.getState() == BluetoothService.STATE_CONNECTED) {
-            for(Protocol p : Protocol.values()) {
+            for(int i = 1; i< Protocol.values().length ; i++) {
+                Protocol p = Protocol.values()[i];
+                selectProtocol = new ATSP_(p.getId());
                 // Starts procedure for select protocol
-                if (!p.equals(Protocol.AUTO))
                 try {
                     // Reset ELM
                     reset.run(out, in);
@@ -139,6 +146,12 @@ public class Verification extends AppCompatActivity {
                     selectedProtocol.run(out, in);
                     this.selectedProtocolInfo = selectedProtocol.getProtocol();
                     System.out.println(selectedProtocol);
+
+                    suppPIDs.setISO(selectedProtocolInfo.isISO());
+                    headerOn.run(out,in);
+                    if (!headerOn.isOK())
+                        return false;
+                    suppPIDs.run(out, in);
                     break;
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -146,7 +159,7 @@ public class Verification extends AppCompatActivity {
                     return false;
                 } catch (ExecutionException e) {
                     e.printStackTrace();
-                    return false;
+                    continue;
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                     return false;
@@ -172,7 +185,6 @@ public class Verification extends AppCompatActivity {
         if (mBTService.getState() == BluetoothService.STATE_CONNECTED) {
             // Starts procedure for request DTC
             try {
-                // Reset ELM
                 headerOn.run(out,in);
                 if (!headerOn.isOK())
                     return false;
@@ -274,6 +286,7 @@ public class Verification extends AppCompatActivity {
 
         MonitorsStatus monStatus = new MonitorsStatus();
         monStatus.setEcus(this.ecus);
+        monStatus.setISO(selectedProtocolInfo.isISO());
 
         if (mBTService.getState() == BluetoothService.STATE_CONNECTED) {
             try {
@@ -299,6 +312,84 @@ public class Verification extends AppCompatActivity {
         }
         else
             return false;
+    }
+
+    private void executeReadInfo(){
+        executor.execute(()-> {
+            if (selectCommunicationProtocol()){
+                handler.post(()->{
+                    actionDisplay.setText(getResources().getString(R.string.requestingSuppPIDsDisplay));
+                });
+            }
+            else {
+                handler.post(()->{
+                    setViewErrorState();
+                    if (mBTService.getState() != BluetoothService.STATE_CONNECTED)
+                        finish();
+                });
+                return;
+            }
+            if (requestSupportedPIDs()){
+                handler.post(()->{
+                    actionDisplay.setText(getResources().getString(R.string.requestingOBDTypeDisplay));
+                });
+            }
+            else {
+                handler.post(()->{
+                    setViewErrorState();
+                    if (mBTService.getState() != BluetoothService.STATE_CONNECTED)
+                        finish();
+                });
+                return;
+            }
+            if (requestOBDType()){
+                handler.post(()->{
+                    actionDisplay.setText(getResources().getString(R.string.requestingRPMDisplay));
+                });
+            }
+            else {
+                handler.post(()->{
+                    setViewErrorState();
+                    if (mBTService.getState() != BluetoothService.STATE_CONNECTED)
+                        finish();
+                });
+                return;
+            }
+            if (requestEngineRPM()){
+                handler.post(()->{
+                    actionDisplay.setText(getResources().getString(R.string.requestingMonitorsDisplay));
+                });
+            }
+            else {
+                handler.post(()->{
+                    setViewErrorState();
+                    if (mBTService.getState() != BluetoothService.STATE_CONNECTED)
+                        finish();
+                });
+                return;
+            }
+            if (requestMonitors()){
+                handler.post(()->{
+                    Intent intent = new Intent(this, VerificationResult.class);
+                    intent.putParcelableArrayListExtra("ecus", (ArrayList<? extends Parcelable>) ecus);
+                    intent.putExtra("versionELM",versionELM);
+                    intent.putExtra("protocol", selectedProtocolInfo);
+                    intent.putExtra("typeOBD", currentTypeOBD);
+                    intent.putExtra("engineRPM",currentRPM);
+                    startActivity(intent);
+                    finish();
+                    return;
+                });
+            }
+            else {
+                handler.post(()->{
+                    setViewErrorState();
+                    if (mBTService.getState() != BluetoothService.STATE_CONNECTED)
+                        finish();
+                });
+                return;
+            }
+        });
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {

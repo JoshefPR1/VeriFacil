@@ -12,6 +12,7 @@ public abstract class Command {
     protected String commName;
     protected String comm;
     protected String resultText;
+    protected boolean isOk = false;
 
     protected boolean sendCommand(OutputStream out) throws IOException, InterruptedException {
         out.write((this.comm + "\r").getBytes());
@@ -41,7 +42,8 @@ public abstract class Command {
         this.resultText = res.toString()
                 .replaceAll("SEARCHING","")
                 .replaceAll("\\s","")
-                .replaceAll("(BUS INIT(:?))|(BUSINIT(:?))|(\\.\\.\\.)", "");
+                .replaceAll("(BUS INIT(:?))|(BUSINIT(:?))|(\\.\\.\\.)", "")
+                .toUpperCase();
     }
 
     protected abstract void interpretResult() throws ExecutionException, DecoderException;
@@ -78,6 +80,7 @@ public abstract class Command {
                 );
         }
 
+        isOk = true;
     }
 
     /*public static void hasError(String resultText) throws ExecutionException {
@@ -132,5 +135,9 @@ public abstract class Command {
 
     public void setCommName(String commName) {
         this.commName = commName;
+    }
+
+    public boolean isOk() {
+        return isOk;
     }
 }

@@ -9,4 +9,10 @@
     <string name="requestPermText">Volver a solicitar permiso de localización</string>
     <string name="requestPermDisplayText">Para poder hacer uso de la aplicación es necesario que se brinden permisos para hacer uso de la localización, Andorid lo utiliza al momento de buscar dispositivos.</string>
     <string name="requestBTOnText">Para poder hacer uso de la aplicación es necesario mantener encendido el adaptador bluetooth, por favor vuelve a activarlo.</string>
+    <string name="selectingCommProtocolDisplay">Probando protocolos para comunicarse con el vehículo ...</string>
+    <string name="requestingSuppPIDsDisplay">Solicitando los PIDs soportados por el automovil ...</string>
+    <string name="requestingOBDTypeDisplay">Solicitando el tipo de OBD del vehículo ...</string>
+    <string name="requestingRPMDisplay">Verificando que el vehículo se encuentra encendido ...</string>
+    <string name="requestingMonitorsDisplay">Solicitando información sobre los monitores del vehículo</string>
+    <string name="verificationButtonText">Realizar la pre-verificación</string>
 </resources>

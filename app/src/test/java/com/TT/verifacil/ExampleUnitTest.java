@@ -1,10 +1,12 @@
 package com.TT.verifacil;
 
 import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.BinaryCodec;
 import org.apache.commons.codec.binary.Hex;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -14,6 +16,7 @@ import Utils.OBDCommands.CountDTC;
 import Utils.OBDCommands.ReadDTC;
 import Utils.TroubleCode;
 import Utils.TroubleCodeService;
+import Utils.Utils;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -93,6 +96,8 @@ public class ExampleUnitTest {
     public void Pruebas_isCorrect() throws DecoderException {
         System.out.println(Integer.parseInt("FFFF",16));
         System.out.println(Integer.parseInt("10101010101",2));
-        System.out.println(Hex.decodeHex("FFFF".toCharArray())[0]);
+        System.out.println( BinaryCodec.toAsciiString(Hex.decodeHex("0070".toCharArray())) );
+        System.out.println(Utils.hexToBin("00076500"));
     }
+
 }

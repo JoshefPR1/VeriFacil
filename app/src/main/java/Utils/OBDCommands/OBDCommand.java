@@ -13,7 +13,7 @@ public abstract class OBDCommand extends Command {
     protected String commPid;
 
     OBDCommand(String commMode, String commPid){
-        if (commMode.matches("\\d\\d") && commPid.matches("\\d\\d")){
+        if (commMode.matches("[\\d|ABCDEF][\\d|ABCDEF]") && commPid.matches("[\\d|ABCDEF][\\d|ABCDEF]")){
             this.commMode = commMode;
             this.commPid = commPid;
             this.comm = commMode + commPid;

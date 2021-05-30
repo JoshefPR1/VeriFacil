@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import Utils.ECU;
+import Utils.Utils;
 
 public class MonitorsStatus extends OBDCommand {
     private List<ECU> ecus;
@@ -36,22 +37,22 @@ public class MonitorsStatus extends OBDCommand {
             System.out.println(frames[i+1]);
 
             String header = frames[i];
-            String frame = frames[i];
+            String frame = frames[i+1];
             ECU ecu =  ECU.findECU(isISO?headerISO(header):headerNoISO(header),ecus);
 
-            String binaryString = BinaryCodec.toAsciiString(Hex.decodeHex(frame.toCharArray()));
+            String binaryString = Utils.hexToBin(frame);
 
             String statusMILBS = binaryString.substring(0,8);
             String monitorsBBS = binaryString.substring(8,16);
             String monitorsCBS = binaryString.substring(16);
 
-            ecu.setMILOn(statusMILBS.charAt(0)==1);
+            ecu.setMILOn(statusMILBS.charAt(0)=='1');
             ecu.setNumDTC(Integer.parseInt(statusMILBS.substring(1),2));
             List<Monitor> monitors = new ArrayList();
             List<Integer> statusMonitors = new ArrayList();
 
             for (Monitor mon : MonitorsB.values()){
-                if (monitorsBBS.charAt(mon.getBit()+4)==1){
+                if (monitorsBBS.charAt(mon.getBit()+4)=='1'){
                     monitors.add(mon);
                     statusMonitors.add(((int) monitorsBBS.charAt(mon.getBitStatus())) - 48);
                 }
@@ -64,9 +65,9 @@ public class MonitorsStatus extends OBDCommand {
             statusMonitors = new ArrayList();
 
             for (Monitor mon : MonitorsC.values()){
-                if (monitorsCBS.charAt(mon.getBit()+4)==1){
+                if (monitorsCBS.charAt(mon.getBit())=='1'){
                     monitors.add(mon);
-                    statusMonitors.add(((int) monitorsCBS.charAt(mon.getBit())) - 48);
+                    statusMonitors.add(((int) monitorsCBS.charAt(mon.getBit()+8)) - 48);
                 }
             }
 

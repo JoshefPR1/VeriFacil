@@ -8,6 +8,8 @@ import org.apache.commons.codec.binary.BinaryCodec;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -29,9 +31,32 @@ public class SupportedPIDs extends OBDCommand{
     private List<ECU> ecus;
 
     @Override
+    protected void readResult(InputStream in) throws IOException {
+        byte b = 0;
+        StringBuilder res = new StringBuilder();
+
+        // read until '>' arrives OR end of stream reached
+        char c;
+        // -1 if the end of the stream is reached
+        while (((b = (byte) in.read()) > -1)) {
+            c = (char) b;
+            if (c == '>') // read until '>' arrives
+            {
+                break;
+            }
+            res.append(c);
+        }
+
+        this.resultText = res.toString()
+                .replaceAll("SEARCHING","")
+                .replaceAll("(BUS INIT(:?))|(BUSINIT(:?))|(\\.\\.\\.)", "")
+                .toUpperCase();
+    }
+
+    @Override
     protected void interpretResult() throws ExecutionException, DecoderException {
         String resultNoSpace = this.resultText.replaceAll(" ","");
-        String[] frames = resultNoSpace.split("4100");
+        String[] frames = resultNoSpace.split("4100|\\s");
 
         for (int i = 0; i<frames.length; i+=2){
 
@@ -39,7 +64,7 @@ public class SupportedPIDs extends OBDCommand{
             System.out.println(frames[i+1]);
 
             String header = frames[i];
-            String frame = frames[i];
+            String frame = frames[i+1];
             ECU nECU = new ECU(isISO?headerISO(header):headerNoISO(header));
 
             String binaryString = BinaryCodec.toAsciiString(Hex.decodeHex(frame.toCharArray()));

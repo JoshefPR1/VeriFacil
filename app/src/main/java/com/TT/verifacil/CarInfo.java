@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Utils.ATCommands.Protocol;
+import Utils.ECU;
+import Utils.OBDCommands.TypesOBD;
 import Utils.TroubleCode;
 
 
@@ -33,10 +35,14 @@ public class CarInfo extends AppCompatActivity {
     private LinearLayout mLLListCodesView;
     private TextView mNoCodesDisplay;
     private Button mSendCodesButton;
+    private TextView mTipoOBDCIValueText;
 
     private Protocol protocolSelected;
     private String versionELM;
     private List<TroubleCode> troubleCodes;
+    private List<ECU> ecus;
+    private TypesOBD typeOBD;
+    private float engineRPM;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +53,9 @@ public class CarInfo extends AppCompatActivity {
         protocolSelected = (Protocol) intent.getSerializableExtra("protocol");
         versionELM = intent.getStringExtra("versionELM");
         troubleCodes = intent.getParcelableArrayListExtra("troubleCodes");
+        typeOBD = (TypesOBD) intent.getSerializableExtra("typeOBD");
+        engineRPM = intent.getFloatExtra("engineRPM", (float) 0.0);
+        ecus = intent.getParcelableArrayListExtra("ecus");
 
     }
 
@@ -56,8 +65,11 @@ public class CarInfo extends AppCompatActivity {
         super.onStart();
         mVersionELMValue = (TextView) findViewById(R.id.versionValueText);
         mProtocolValue = (TextView) findViewById(R.id.protocolValueText);
+        mTipoOBDCIValueText = (TextView) findViewById(R.id.tipoOBDCIValueText);
         mVersionELMValue.setText(versionELM);
         mProtocolValue.setText(protocolSelected.getDescription());
+        mTipoOBDCIValueText.setText(typeOBD.getName());
+
 
         if (troubleCodes == null || troubleCodes.isEmpty()) {
             mLLListCodesView = (LinearLayout) findViewById(R.id.listCodesView);

@@ -17,7 +17,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar"
         android:usesCleartextTraffic="true">
-        <activity android:name=".Verification"></activity>
+        <activity android:name=".VerificationResult"></activity>
+        <activity android:name=".Verification" />
         <activity android:name=".InspectionAnalysis" />
         <activity android:name=".CarInfo" />
         <activity android:name=".ReadCodesVehicle" />
