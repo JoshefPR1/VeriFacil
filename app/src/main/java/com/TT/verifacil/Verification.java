@@ -316,6 +316,11 @@ public class Verification extends AppCompatActivity {
 
     private void executeReadInfo(){
         executor.execute(()-> {
+            try {
+                Thread.sleep(7000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             if (selectCommunicationProtocol()){
                 handler.post(()->{
                     actionDisplay.setText(getResources().getString(R.string.requestingSuppPIDsDisplay));
@@ -328,6 +333,11 @@ public class Verification extends AppCompatActivity {
                         finish();
                 });
                 return;
+            }
+            try {
+                Thread.sleep(7000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             if (requestSupportedPIDs()){
                 handler.post(()->{
@@ -342,6 +352,11 @@ public class Verification extends AppCompatActivity {
                 });
                 return;
             }
+            try {
+                Thread.sleep(7000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             if (requestOBDType()){
                 handler.post(()->{
                     actionDisplay.setText(getResources().getString(R.string.requestingRPMDisplay));
@@ -355,6 +370,11 @@ public class Verification extends AppCompatActivity {
                 });
                 return;
             }
+            try {
+                Thread.sleep(7000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             if (requestEngineRPM()){
                 handler.post(()->{
                     actionDisplay.setText(getResources().getString(R.string.requestingMonitorsDisplay));
@@ -367,6 +387,11 @@ public class Verification extends AppCompatActivity {
                         finish();
                 });
                 return;
+            }
+            try {
+                Thread.sleep(7000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
             if (requestMonitors()){
                 handler.post(()->{

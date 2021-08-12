@@ -1,11 +1,11 @@
 <resources>
-    <string name="app_name">VeriFacil</string>
-    <string name="verifacil">VeriFacil</string>
+    <string name="app_name">VeriFácil</string>
+    <string name="verifacil">VeriFácil</string>
     <string name="conectarseButtonText">Conectarse con OBD II</string>
     <string name="connecting">Conectando ...</string>
     <string name="readCodesButtonText">Leer códigos de error almacenados</string>
-    <string name="readyText">Estamos listos para poder iniciar la lectura de códigos de falla.</string>
-    <string name="welcomeText">Bienvenido a VeriFacil, con esta aplicación podrás realizar una preverificación de tu automóvil</string>
+    <string name="readyText">Estamos listos para poder iniciar la pre-verificación.</string>
+    <string name="welcomeText">Bienvenido a VeriFácil, con esta aplicación podrás realizar una preverificación de tu automóvil</string>
     <string name="requestPermText">Volver a solicitar permiso de localización</string>
     <string name="requestPermDisplayText">Para poder hacer uso de la aplicación es necesario que se brinden permisos para hacer uso de la localización, Andorid lo utiliza al momento de buscar dispositivos.</string>
     <string name="requestBTOnText">Para poder hacer uso de la aplicación es necesario mantener encendido el adaptador bluetooth, por favor vuelve a activarlo.</string>
